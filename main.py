@@ -26,8 +26,7 @@ def parse_document_sosp24(soup):
         if "Session" not in session_title_h4.text or "Poster" in session_title_h4.text:
             continue
 
-        session_title = " ".join([line.strip() for line in session_title_h4.text.strip().split("\n")])
-        print(f"Session title: {session_title}")
+        session_title = session_title_h4.text.strip().split("\n")[0].strip()
         session_titles.append(session_title)
 
     titles = soup.find_all('a', href=lambda h: 'assets/papers/' in h)
