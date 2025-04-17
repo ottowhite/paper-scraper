@@ -5,36 +5,55 @@ import re
 import os
 import hashlib
 from datetime import datetime, timedelta
+from retrieve_webpage import get_cached_webpage, scrape_and_save
+from saving import save_to_notion_format, save_to_json
 
-def get_cached_webpage(url, cache_dir=".cache"):
-    """
-    Get webpage content from cache or download it if not cached.
-    Returns the webpage content as a string.
-    """
-    # Create cache directory if it doesn't exist
-    os.makedirs(cache_dir, exist_ok=True)
+def scrape_sessions_sosp24(url):
+    # Get webpage content (from cache or download)
+    html_content = get_cached_webpage(url)
     
-    # Create a unique filename based on the URL
-    url_hash = hashlib.md5(url.encode()).hexdigest()
-    cache_file = os.path.join(cache_dir, f"{url_hash}.html")
-    
-    # Check if cache exists
-    if os.path.exists(cache_file):
-        print("Using cached webpage...")
-        with open(cache_file, 'r', encoding='utf-8') as f:
-            return f.read()
-    
-    # Download the webpage if cache doesn't exist
-    print("Downloading webpage...")
-    response = requests.get(url)
-    if response.status_code != 200:
-        raise Exception(f"Failed to retrieve the webpage: Status code {response.status_code}")
-    
-    # Save to cache
-    with open(cache_file, 'w', encoding='utf-8') as f:
-        f.write(response.text)
-    
-    return response.text
+    # Parse the HTML content
+    soup = BeautifulSoup(html_content, 'html.parser')
+    return parse_document_sosp24(soup)
+
+def parse_document_sosp24(soup):
+    session_titles = []
+    schedule_div = soup.find('section', id='schedule').find('div', class_='container')
+    session_title_h4s = soup.find_all('h4', class_='sch')
+
+    for session_title_h4 in session_title_h4s:
+        if "Session" not in session_title_h4.text or "Poster" in session_title_h4.text:
+            continue
+
+        session_title = " ".join([line.strip() for line in session_title_h4.text.strip().split("\n")])
+        print(f"Session title: {session_title}")
+        session_titles.append(session_title)
+
+    titles = soup.find_all('a', href=lambda h: 'assets/papers/' in h)
+    papers = []
+
+    for title in titles:
+        print(title.text.strip())
+        authors = title.parent.find_next('em').text.strip()
+        print(authors)
+        papers.append({
+            "title": title.text.strip(),
+            "authors": authors,
+            "abstract": "",
+            "link": ""
+        })
+
+    papers_in_each_session = [4, 4, 5, 4, 4, 4, 5, 4, 4, 5]
+    assert len(papers_in_each_session) == len(session_titles)
+    session_titles_and_paper_counts = list(zip(session_titles, papers_in_each_session))
+    assert len(papers) == sum(papers_in_each_session)
+
+    sessions = {}
+    for session_title, papers_in_session in session_titles_and_paper_counts:
+        sessions[session_title] = papers[:papers_in_session]
+        papers = papers[papers_in_session:]
+
+    return sessions
 
 def scrape_sessions(url, conference_name):
     # Get webpage content (from cache or download)
@@ -130,45 +149,23 @@ def parse_authors_osdi_nsdi_atc(authors):
     
     return authors_processed
 
-def save_to_notion_format(data, filename="osdi24_sessions.notion.txt"):
-    """Save the scraped data to a Notion format file"""
-    with open(filename, 'w', encoding='utf-8') as f:
-        for session_title, papers in data.items():
-            f.write(f" - {session_title}\n")
-            for paper in papers:
-                
-                if isinstance(paper['authors'], list):
-                    for author in paper['authors']:
-                        f.write(f"     - {author['name']} ({author['institution']})\n")
-                else:
-                    f.write(f"     - {paper['authors']}\n")
-                f.write(f"     - {paper['abstract']}\n")
-                f.write(f"     - {paper['link']}\n")
-
-def save_to_json(data, filename="osdi24_sessions.json"):
-    """Save the scraped data to a JSON file"""
-    with open(filename, 'w', encoding='utf-8') as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
-    print(f"Data saved to {filename}")
-
 def scrape_and_save(url, conference_name, filename_prefix):
-    data = scrape_sessions(url, conference_name)
-    if data:
-        save_to_json(data, f"{filename_prefix}.json")
-        save_to_notion_format(data, f"{filename_prefix}.notion.txt")
-        print(f"Scraping completed successfully! ({filename_prefix})")
-    else:
-        print(f"Scraping failed. ({filename_prefix})")
+    if conference_name == "atc" or conference_name == "nsdi" or conference_name == "osdi":
+        data = scrape_sessions(url, conference_name)
+    elif conference_name == "sosp24":
+        data = scrape_sessions_sosp24(url)
+
+    save_to_json(data, f"{filename_prefix}.json")
+    save_to_notion_format(data, f"{filename_prefix}.notion.txt")
+    print(f"Scraping completed successfully! ({filename_prefix})")
 
 if __name__ == "__main__":
     # for year in range(20, 25):
     #     scrape_and_save(f"https://www.usenix.org/conference/osdi{year}/technical-sessions", "osdi", f"osdi{year}_sessions")
         # scrape_and_save(f"https://www.usenix.org/conference/atc{year}/technical-sessions", "atc", f"atc{year}_sessions")
     
-    scrape_and_save("https://www.usenix.org/conference/atc21/technical-sessions", "atc", "atc21_sessions")
+    scrape_and_save("https://sigops.org/s/conferences/sosp/2024/schedule.html", "sosp24", "sosp24_sessions")
 
 
     # for year in range(20, 26):
     #     scrape_and_save(f"https://www.usenix.org/conference/nsdi{year}/technical-sessions", "nsdi", f"nsdi{year}_sessions")
-
- 
