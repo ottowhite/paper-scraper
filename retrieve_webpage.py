@@ -37,13 +37,19 @@ def get_cached_webpage(url, params=None, cache_dir=".cache", response_type="html
     
     # Download the webpage if cache doesn't exist
     print("Downloading webpage...")
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
+    # headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
+    headers = None
     if params is not None:
         response = requests.get(url, headers=headers, params=params)
     else:
         response = requests.get(url, headers=headers)
 
     if response.status_code != 200:
+        if response.status_code == 429:
+            # Rate limit exceeded
+            print("Rate limited.")
+            print(response.text)
+
         raise Exception(f"Failed to retrieve the webpage: Status code {response.status_code}")
     
     # Save to cache
