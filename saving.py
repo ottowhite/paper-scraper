@@ -10,6 +10,7 @@ def save_to_notion_format(data, filename="osdi24_sessions.notion.txt"):
             f.write(f" - {session_title}\n")
             for paper in papers:
                 
+                f.write(f"   - {paper['title']}\n")
                 if isinstance(paper['authors'], list):
                     for author in paper['authors']:
                         f.write(f"     - {author['name']} ({author['institution']})\n")
