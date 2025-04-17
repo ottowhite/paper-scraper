@@ -31,12 +31,3 @@ def get_cached_webpage(url, cache_dir=".cache"):
         f.write(response.text)
     
     return response.text
-
-def scrape_and_save(url, conference_name, filename_prefix):
-    data = scrape_sessions(url, conference_name)
-    if data:
-        save_to_json(data, f"{filename_prefix}.json")
-        save_to_notion_format(data, f"{filename_prefix}.notion.txt")
-        print(f"Scraping completed successfully! ({filename_prefix})")
-    else:
-        print(f"Scraping failed. ({filename_prefix})")
