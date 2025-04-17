@@ -1,7 +1,7 @@
 import requests
 import os
 import hashlib
-
+import time
 def get_cached_webpage(url, cache_dir=".cache"):
     """
     Get webpage content from cache or download it if not cached.
@@ -19,6 +19,9 @@ def get_cached_webpage(url, cache_dir=".cache"):
         print("Using cached webpage...")
         with open(cache_file, 'r', encoding='utf-8') as f:
             return f.read()
+
+    # Wait 2s on the retrieve path to avoid being blocked by the server
+    time.sleep(2)
     
     # Download the webpage if cache doesn't exist
     print("Downloading webpage...")

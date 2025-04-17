@@ -5,8 +5,9 @@ import re
 import os
 import hashlib
 from datetime import datetime, timedelta
-from retrieve_webpage import get_cached_webpage, scrape_and_save
+from retrieve_webpage import get_cached_webpage
 from saving import save_to_notion_format, save_to_json
+from retrieve_paper_info import get_info_from_scholar
 
 def scrape_sessions_sosp24(url):
     # Get webpage content (from cache or download)
@@ -36,11 +37,12 @@ def parse_document_sosp24(soup):
         print(title.text.strip())
         authors = title.parent.find_next('em').text.strip()
         print(authors)
+        abstract, link = get_info_from_scholar(title.text.strip())
         papers.append({
             "title": title.text.strip(),
             "authors": authors,
-            "abstract": "",
-            "link": ""
+            "abstract": abstract,
+            "link": link
         })
 
     papers_in_each_session = [4, 4, 5, 4, 4, 4, 5, 4, 4, 5]
