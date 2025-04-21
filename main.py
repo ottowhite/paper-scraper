@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from retrieve_webpage import get_cached_webpage
 from saving import save_to_notion_format, save_to_json
 from retrieve_paper_info import get_info_from_semantic_scholar
+from dotenv import load_dotenv
 
 def scrape_sessions_sosp24(url):
     # Get webpage content (from cache or download)
@@ -160,7 +161,11 @@ def scrape_and_save(url, conference_name, filename_prefix):
     save_to_notion_format(data, f"{filename_prefix}.notion.txt")
     print(f"Scraping completed successfully! ({filename_prefix})")
 
+
 if __name__ == "__main__":
+    load_dotenv()
+    assert os.getenv("SEMANTIC_SCHOLAR_API_KEY") is not None
+
     # for year in range(20, 25):
     #     scrape_and_save(f"https://www.usenix.org/conference/osdi{year}/technical-sessions", "osdi", f"osdi{year}_sessions")
         # scrape_and_save(f"https://www.usenix.org/conference/atc{year}/technical-sessions", "atc", f"atc{year}_sessions")

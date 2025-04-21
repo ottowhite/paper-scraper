@@ -3,9 +3,9 @@ import os
 import hashlib
 import time
 
-rate_limit_sleep_time = 60
+rate_limit_sleep_time = 2
 
-def get_cached_webpage(url, params=None, cache_dir=".cache", response_type="html"):
+def get_cached_webpage(url, params=None, headers=None, cache_dir=".cache", response_type="html"):
     """
     Get webpage content from cache or download it if not cached.
     Returns the webpage content as a string.
@@ -42,12 +42,7 @@ def get_cached_webpage(url, params=None, cache_dir=".cache", response_type="html
     
     # Download the webpage if cache doesn't exist
     print("Downloading webpage...")
-    # headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
-    headers = None
-    if params is not None:
-        response = requests.get(url, headers=headers, params=params)
-    else:
-        response = requests.get(url, headers=headers)
+    response = requests.get(url, headers=headers, params=params)
 
     if response.status_code != 200:
         if response.status_code == 429:

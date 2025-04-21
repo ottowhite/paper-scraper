@@ -3,6 +3,9 @@ from bs4 import BeautifulSoup
 from retrieve_webpage import get_cached_webpage
 import requests
 import json
+import os
+
+
 def title_to_scholar_search_url(title: str) -> str:
     base_url = "https://scholar.google.com/scholar"
     params = {
@@ -37,7 +40,10 @@ def get_info_from_semantic_scholar(title: str) -> str:
         "limit": 1,
         "fields": "abstract,url"
     }
-    response = get_cached_webpage(url, params=params, response_type="json")
+    headers = {
+        "x-api-key": os.getenv("SEMANTIC_SCHOLAR_API_KEY")
+    }
+    response = get_cached_webpage(url, params=params, headers=headers, response_type="json")
     json_response = json.loads(response)
     if len(json_response["data"]) == 0:
         return None, None
