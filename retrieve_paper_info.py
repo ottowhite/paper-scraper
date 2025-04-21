@@ -45,8 +45,12 @@ def get_info_from_semantic_scholar(title: str) -> str:
     }
     response = get_cached_webpage(url, params=params, headers=headers, response_type="json")
     json_response = json.loads(response)
+
+    if "data" not in json_response:
+        return "", ""
+   
     if len(json_response["data"]) == 0:
-        return None, None
+        return "", ""
     
     paper = json_response["data"][0]
     abstract = paper["abstract"]
