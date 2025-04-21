@@ -2,11 +2,15 @@ import requests
 import os
 import hashlib
 import time
+
+rate_limit_sleep_time = 60
+
 def get_cached_webpage(url, params=None, cache_dir=".cache", response_type="html"):
     """
     Get webpage content from cache or download it if not cached.
     Returns the webpage content as a string.
     """
+    global rate_limit_sleep_time
     assert response_type in ["html", "json"]
 
     # Create cache directory if it doesn't exist
@@ -33,7 +37,8 @@ def get_cached_webpage(url, params=None, cache_dir=".cache", response_type="html
             return f.read()
 
     # Wait 2s on the retrieve path to avoid being blocked by the server
-    time.sleep(10)
+    print(f"Sleeping for {rate_limit_sleep_time}s...")
+    time.sleep(rate_limit_sleep_time)
     
     # Download the webpage if cache doesn't exist
     print("Downloading webpage...")
@@ -47,8 +52,11 @@ def get_cached_webpage(url, params=None, cache_dir=".cache", response_type="html
     if response.status_code != 200:
         if response.status_code == 429:
             # Rate limit exceeded
-            print("Rate limited.")
+            print(f"Rate limited at {rate_limit_sleep_time}s, doubling the sleep time to {2 * rate_limit_sleep_time}s.")
             print(response.text)
+            rate_limit_sleep_time *= 2
+
+            return get_cached_webpage(url, params, cache_dir, response_type)
 
         raise Exception(f"Failed to retrieve the webpage: Status code {response.status_code}")
     
