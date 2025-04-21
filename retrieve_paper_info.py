@@ -57,6 +57,8 @@ def get_info_from_semantic_scholar(title: str) -> str:
 
     if "openAccessPdf" in paper:
         url = paper["openAccessPdf"]["url"]
+        if url == "":
+            url = paper["url"]
     else:
         url = paper["url"]
     
