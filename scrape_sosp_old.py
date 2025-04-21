@@ -8,15 +8,23 @@ def flat_map(f, xs):
         ys.extend(f(x))
     return ys
 
-def scrape_sessions_sosp_old(url):
+def scrape_sessions_sosp_old(url, conference_name):
+    assert conference_name in ["sosp21", "sosp23", "sosp19"], "Invalid conference name"
+
     html_content = get_cached_webpage(url)
     soup = BeautifulSoup(html_content, 'html.parser')
-    return parse_document_sosp_old(soup)
+    return parse_document_sosp_old(soup, conference_name)
 
-def parse_document_sosp_old(soup):
-    program_div = soup.find('div', class_='program')
+def parse_document_sosp_old(soup, conference_name):
+    if conference_name == "sosp19":
+        program_div = soup.find('div', class_='main-text')
+    else:
+        program_div = soup.find('div', class_='program')
 
-    days_container_div = program_div.find_all('div', class_='col-md-12')[1]
+    if conference_name == "sosp21":
+        days_container_div = program_div.find_all('div', class_='col-md-12')[0]
+    elif conference_name in ["sosp23", "sosp19"]:
+        days_container_div = program_div.find_all('div', class_='col-md-12')[1]
 
     table_divs = days_container_div.find_all('table', class_='table-spread')
     table_rows = flat_map(lambda table_div: table_div.find_all('tr'), table_divs)
@@ -34,7 +42,11 @@ def parse_document_sosp_old(soup):
         if i >= len(table_rows):
             break
 
-        session_title = table_rows[i].find('strong').text.strip()
+        if conference_name == "sosp19":
+            session_title = table_rows[i].find('strong').text.strip()
+            session_title = session_title.split("\n\t")[0]
+        else:
+            session_title = table_rows[i].find('strong').text.strip()
 
         papers = []
         # Get all papers in the session

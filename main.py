@@ -18,8 +18,10 @@ def scrape_and_save(url, conference_name, filename_prefix):
         data = scrape_sessions(url, conference_name)
     elif conference_name == "sosp24":
         data = scrape_sessions_sosp24(url)
-    elif conference_name == "sosp_old":
-        data = scrape_sessions_sosp_old(url)
+    elif conference_name in ["sosp23", "sosp21", "sosp19"]:
+        data = scrape_sessions_sosp_old(url, conference_name)
+    else:
+        raise ValueError(f"Invalid conference name: {conference_name}")
 
     save_to_json(data, f"{filename_prefix}.json")
     save_to_notion_format(data, f"{filename_prefix}.notion.txt")
@@ -40,4 +42,7 @@ if __name__ == "__main__":
     # for year in range(20, 26):
     #     scrape_and_save(f"https://www.usenix.org/conference/nsdi{year}/technical-sessions", "nsdi", f"nsdi{year}_sessions")
 
-    scrape_and_save("https://sosp2023.mpi-sws.org/program.html", "sosp_old", "sosp23_sessions")
+    # scrape_and_save("https://sosp2023.mpi-sws.org/program.html", "sosp23", "sosp23_sessions")
+    # scrape_and_save("https://sosp2021.mpi-sws.org/program.html", "sosp21", "sosp21_sessions")
+
+    scrape_and_save("https://www.sigops.org/s/conferences/sosp/2019/program.html", "sosp19", "sosp19_sessions")
