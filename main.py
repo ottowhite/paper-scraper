@@ -7,7 +7,7 @@ import hashlib
 from datetime import datetime, timedelta
 from retrieve_webpage import get_cached_webpage
 from saving import save_to_notion_format, save_to_json
-from retrieve_paper_info import get_info_from_semantic_scholar
+from retrieve_paper_info import get_info_from_semantic_scholar, get_abstract_from_osdi_nsdi_atc_link
 from dotenv import load_dotenv
 
 def scrape_sessions_sosp24(url):
@@ -103,6 +103,8 @@ def parse_paper(paper_div, conference_name):
     if abstract_div is None:
         print(f"abstract_div is None for {paper_title}")
         abstract, _ = get_info_from_semantic_scholar(paper_title)
+        if abstract == "":
+            abstract = get_abstract_from_osdi_nsdi_atc_link(paper_link)
     else:
         abstract_paragraphs = abstract_div.find_all('p')
 
@@ -166,12 +168,14 @@ if __name__ == "__main__":
     load_dotenv()
     assert os.getenv("SEMANTIC_SCHOLAR_API_KEY") is not None
 
-    for year in range(20, 25):
-        scrape_and_save(f"https://www.usenix.org/conference/osdi{year}/technical-sessions", "osdi", f"osdi{year}_sessions")
-        scrape_and_save(f"https://www.usenix.org/conference/atc{year}/technical-sessions", "atc", f"atc{year}_sessions")
+    # for year in range(20, 25):
+    #     scrape_and_save(f"https://www.usenix.org/conference/osdi{year}/technical-sessions", "osdi", f"osdi{year}_sessions")
+    #     scrape_and_save(f"https://www.usenix.org/conference/atc{year}/technical-sessions", "atc", f"atc{year}_sessions")
     
-    scrape_and_save("https://sigops.org/s/conferences/sosp/2024/schedule.html", "sosp24", "sosp24_sessions")
+    # scrape_and_save("https://sigops.org/s/conferences/sosp/2024/schedule.html", "sosp24", "sosp24_sessions")
 
 
-    for year in range(20, 26):
-        scrape_and_save(f"https://www.usenix.org/conference/nsdi{year}/technical-sessions", "nsdi", f"nsdi{year}_sessions")
+    # for year in range(20, 26):
+    #     scrape_and_save(f"https://www.usenix.org/conference/nsdi{year}/technical-sessions", "nsdi", f"nsdi{year}_sessions")
+
+    scrape_and_save("https://www.usenix.org/conference/nsdi25/technical-sessions", "nsdi", "nsdi25_sessions")

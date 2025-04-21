@@ -43,7 +43,7 @@ def get_info_from_semantic_scholar(title: str) -> str:
     headers = {
         "x-api-key": os.getenv("SEMANTIC_SCHOLAR_API_KEY")
     }
-    response = get_cached_webpage(url, params=params, headers=headers, response_type="json")
+    response = get_cached_webpage(url, params=params, headers=headers, response_type="json", target_url="semantic_scholar")
     json_response = json.loads(response)
 
     if "data" not in json_response:
@@ -59,8 +59,21 @@ def get_info_from_semantic_scholar(title: str) -> str:
         url = paper["openAccessPdf"]["url"]
     else:
         url = paper["url"]
+    
+    if abstract == None:
+        abstract = ""
+    if url == None:
+        url = ""
 
     return abstract, url
+
+def get_abstract_from_osdi_nsdi_atc_link(paper_link: str) -> str:
+    html_content = get_cached_webpage(paper_link, target_url="other")
+    soup = BeautifulSoup(html_content, 'html.parser')
+    abstract_div = soup.find('div', class_='field-name-field-paper-description')
+    abstract_paragraphs = abstract_div.find_all('p')
+    abstract = "\n".join([p.text.strip() for p in abstract_paragraphs])
+    return abstract
 
 def assert_paper_info_correct(title: str, expected_abstract: str, expected_link: str):
     abstract, link = get_info_from_semantic_scholar(title)

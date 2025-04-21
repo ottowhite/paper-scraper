@@ -3,15 +3,19 @@ import os
 import hashlib
 import time
 
-rate_limit_sleep_time = 2
+semantic_scholar_rate_limit_sleep_time = 2
+other_rate_limit_sleep_time = 60
 
-def get_cached_webpage(url, params=None, headers=None, cache_dir=".cache", response_type="html"):
+def get_cached_webpage(url, params=None, headers=None, cache_dir=".cache", response_type="html", target_url="other"):
     """
     Get webpage content from cache or download it if not cached.
     Returns the webpage content as a string.
     """
-    global rate_limit_sleep_time
+    global semantic_scholar_rate_limit_sleep_time
+    global other_rate_limit_sleep_time
+
     assert response_type in ["html", "json"]
+    assert target_url in ["semantic_scholar", "other"]
 
     # Create cache directory if it doesn't exist
     os.makedirs(cache_dir, exist_ok=True)
@@ -37,8 +41,12 @@ def get_cached_webpage(url, params=None, headers=None, cache_dir=".cache", respo
             return f.read()
 
     # Wait 2s on the retrieve path to avoid being blocked by the server
-    print(f"Sleeping for {rate_limit_sleep_time}s...")
-    time.sleep(rate_limit_sleep_time)
+    if target_url == "semantic_scholar":
+        print(f"Sleeping for {semantic_scholar_rate_limit_sleep_time}s...")
+        time.sleep(semantic_scholar_rate_limit_sleep_time)
+    else:
+        print(f"Sleeping for {other_rate_limit_sleep_time}s...")
+        time.sleep(other_rate_limit_sleep_time)
     
     # Download the webpage if cache doesn't exist
     print("Downloading webpage...")
@@ -47,9 +55,12 @@ def get_cached_webpage(url, params=None, headers=None, cache_dir=".cache", respo
     if response.status_code != 200:
         if response.status_code == 429:
             # Rate limit exceeded
-            print(f"Rate limited at {rate_limit_sleep_time}s, doubling the sleep time to {2 * rate_limit_sleep_time}s.")
-            print(response.text)
-            rate_limit_sleep_time *= 2
+            if target_url == "semantic_scholar":
+                print(f"Rate limited at {semantic_scholar_rate_limit_sleep_time}s, doubling the sleep time to {2 * semantic_scholar_rate_limit_sleep_time}s.")
+                semantic_scholar_rate_limit_sleep_time *= 2
+            else:
+                print(f"Rate limited at {other_rate_limit_sleep_time}s, doubling the sleep time to {2 * other_rate_limit_sleep_time}s.")
+                other_rate_limit_sleep_time *= 2
 
             return get_cached_webpage(url, params, cache_dir, response_type)
 
