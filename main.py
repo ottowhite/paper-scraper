@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 from scrape_osdi_atc_nsdi import scrape_sessions
 from scrape_sosp24 import scrape_sessions_sosp24
 from scrape_sosp_old import scrape_sessions_sosp_old
+from scrape_eurosys import scrape_sessions_eurosys
 
 def scrape_and_save(url, conference_name, filename_prefix):
     if conference_name == "atc" or conference_name == "nsdi" or conference_name == "osdi":
@@ -20,6 +21,8 @@ def scrape_and_save(url, conference_name, filename_prefix):
         data = scrape_sessions_sosp24(url)
     elif conference_name in ["sosp23", "sosp21", "sosp19"]:
         data = scrape_sessions_sosp_old(url, conference_name)
+    elif conference_name == "eurosys24":
+        data = scrape_sessions_eurosys(url)
     else:
         raise ValueError(f"Invalid conference name: {conference_name}")
 
@@ -44,5 +47,6 @@ if __name__ == "__main__":
 
     # scrape_and_save("https://sosp2023.mpi-sws.org/program.html", "sosp23", "sosp23_sessions")
     # scrape_and_save("https://sosp2021.mpi-sws.org/program.html", "sosp21", "sosp21_sessions")
+    # scrape_and_save("https://www.sigops.org/s/conferences/sosp/2019/program.html", "sosp19", "sosp19_sessions")
 
-    scrape_and_save("https://www.sigops.org/s/conferences/sosp/2019/program.html", "sosp19", "sosp19_sessions")
+    scrape_and_save("https://2024.eurosys.org/program.html", "eurosys24", "eurosys24_sessions")
