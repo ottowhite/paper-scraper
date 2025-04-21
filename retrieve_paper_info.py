@@ -47,9 +47,16 @@ def get_info_from_semantic_scholar(title: str) -> str:
     json_response = json.loads(response)
     if len(json_response["data"]) == 0:
         return None, None
-
+    
     paper = json_response["data"][0]
-    return paper["abstract"], paper["url"]
+    abstract = paper["abstract"]
+
+    if "openAccessPdf" in paper:
+        url = paper["openAccessPdf"]["url"]
+    else:
+        url = paper["url"]
+
+    return abstract, url
 
 def assert_paper_info_correct(title: str, expected_abstract: str, expected_link: str):
     abstract, link = get_info_from_semantic_scholar(title)
