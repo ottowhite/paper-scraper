@@ -1,0 +1,101 @@
+from bs4 import BeautifulSoup
+from retrieve_webpage import get_cached_webpage
+from retrieve_paper_info import get_info_from_semantic_scholar
+
+class ConferenceScraper:
+	def __init__(self, conference_name, top_level_url):
+		self.conference_name = conference_name
+		self.top_level_soup = BeautifulSoup(get_cached_webpage(top_level_url), 'html.parser')
+		self.sessions = {}
+		self.sessions_and_links = []
+		self.ignore_sessions = [
+			"Martin",
+			"Registration",
+			"Keynote",
+			"Coffee",
+			"Lunch",
+			"Dinner",
+			"Closing",
+			"Opening",
+			"Award",
+			"general assembly",
+			"WACI",
+			"ASPLOS business meeting"
+		]
+
+	def extract(self):
+		self.extract_session_titles_and_links()
+		self.extract_sessions()
+		self.populate_missing_abstracts()
+
+		return self.sessions
+
+	def extract_session_titles_and_links(self):
+		bucket_divs = self.top_level_soup.find_all('div', class_=lambda x: x and 'pretalx-tab-content' in x)
+
+		links = []
+		for bucket_div in bucket_divs:
+			links.extend(bucket_div.find_all('a'))
+
+		for link in links:
+			if not "talk" in link['href']:
+				continue
+
+			session_title = link.find('div', class_='title').text.strip()
+			if any(ignore_session in session_title for ignore_session in self.ignore_sessions):
+				continue
+
+			full_url = "https://download.vusec.net" + link['href']
+			self.sessions_and_links.append((session_title, full_url))
+	
+	def extract_sessions(self):
+		assert len(self.sessions_and_links) != 0
+
+		for session_title, full_url in self.sessions_and_links:
+			soup = BeautifulSoup(get_cached_webpage(full_url), 'html.parser')
+
+			papers = []
+			description_section = soup.find('section', class_='description')
+			paragraphs = description_section.find_all('p')
+			for paragraph in paragraphs:
+				if "session chair" in paragraph.text.strip().lower():
+					continue
+
+				paragraph_text = paragraph.text.strip()
+				paper_title = paragraph.find('strong').text.strip()
+				authors = paragraph_text.replace(paper_title, "").replace("Paper", "").strip()
+				link = paragraph.find('a')['href']
+
+				papers.append({
+					"title": paper_title,
+					"authors": authors,
+					"abstract": "",
+					"link": link
+				})
+
+			self.sessions[session_title] = papers
+	
+	def populate_missing_abstracts(self):
+		# Calculate number of papers with missing abstracts
+		missing_abstracts = 0
+		total_papers = 0
+		for _, papers in self.sessions.items():
+			for paper in papers:
+				if paper["abstract"] == "":
+					missing_abstracts += 1
+				total_papers += 1
+		print(f"Before processing - papers with missing abstracts: {missing_abstracts} out of {total_papers}")
+
+
+		for _, papers in self.sessions.items():
+			for paper in papers:
+				if paper["abstract"] == "":
+					abstract, _ = get_info_from_semantic_scholar(paper["title"])
+					if abstract != "":
+						paper["abstract"] = abstract
+						missing_abstracts -= 1
+
+		print(f"After processing - papers with missing abstracts: {missing_abstracts} out of {total_papers}")
+	
+	def get_sessions(self):
+		return self.sessions
