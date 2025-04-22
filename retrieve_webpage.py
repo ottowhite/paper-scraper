@@ -6,6 +6,8 @@ import time
 semantic_scholar_rate_limit_sleep_time = 2
 other_rate_limit_sleep_time = 60
 
+DEBUG = False
+
 def get_cached_webpage(url, params=None, headers=None, cache_dir=".cache", response_type="html", target_url="other"):
     """
     Get webpage content from cache or download it if not cached.
@@ -19,7 +21,8 @@ def get_cached_webpage(url, params=None, headers=None, cache_dir=".cache", respo
 
     # Create cache directory if it doesn't exist
     os.makedirs(cache_dir, exist_ok=True)
-    print(f"Retrieving webpage {url}")
+    if DEBUG:
+        print(f"Retrieving webpage {url}")
     
     # Create a unique filename based on the URL and params if present
     if params:
@@ -32,11 +35,13 @@ def get_cached_webpage(url, params=None, headers=None, cache_dir=".cache", respo
         cache_file = os.path.join(cache_dir, f"{url_hash}.html")
     else:
         cache_file = os.path.join(cache_dir, f"{url_hash}.json")
-    print(f"Cache file: {cache_file}")
+    if DEBUG:
+        print(f"Cache file: {cache_file}")
 
     # Check if cache exists
     if os.path.exists(cache_file):
-        print("Using cached webpage...")
+        if DEBUG:
+            print("Using cached webpage...")
         with open(cache_file, 'r', encoding='utf-8') as f:
             return f.read()
 
@@ -49,7 +54,8 @@ def get_cached_webpage(url, params=None, headers=None, cache_dir=".cache", respo
         time.sleep(other_rate_limit_sleep_time)
     
     # Download the webpage if cache doesn't exist
-    print("Downloading webpage...")
+    if DEBUG:
+        print("Downloading webpage...")
     response = requests.get(url, headers=headers, params=params)
 
     if response.status_code != 200:
