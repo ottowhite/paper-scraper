@@ -77,26 +77,12 @@ class ConferenceScraper:
 			self.sessions[session_title] = papers
 	
 	def populate_missing_abstracts(self):
-		# Calculate number of papers with missing abstracts
-		missing_abstracts = 0
-		total_papers = 0
-		for _, papers in self.sessions.items():
-			for paper in papers:
-				if paper["abstract"] == "":
-					missing_abstracts += 1
-				total_papers += 1
-		print(f"Before processing - papers with missing abstracts: {missing_abstracts} out of {total_papers}")
-
-
 		for _, papers in self.sessions.items():
 			for paper in papers:
 				if paper["abstract"] == "":
 					abstract, _ = get_info_from_semantic_scholar(paper["title"])
 					if abstract != "":
 						paper["abstract"] = abstract
-						missing_abstracts -= 1
-
-		print(f"After processing - papers with missing abstracts: {missing_abstracts} out of {total_papers}")
 	
 	def print_stats(self):
 		total_papers = 0
@@ -112,6 +98,7 @@ class ConferenceScraper:
 				if paper["link"] == "":
 					missing_links += 1
 
+		print(f"Conference: {self.conference_name} -----------------------------------------")
 		print(f"Sessions: {total_sessions}")
 		print(f"Papers: {total_papers}")
 		print(f"Missing abstracts: {missing_abstracts}")
