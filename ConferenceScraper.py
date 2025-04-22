@@ -27,6 +27,7 @@ class ConferenceScraper:
 		self.extract_session_titles_and_links()
 		self.extract_sessions()
 		self.populate_missing_abstracts()
+		self.print_stats()
 
 		return self.sessions
 
@@ -97,5 +98,24 @@ class ConferenceScraper:
 
 		print(f"After processing - papers with missing abstracts: {missing_abstracts} out of {total_papers}")
 	
+	def print_stats(self):
+		total_papers = 0
+		for _, papers in self.sessions.items():
+			total_papers += len(papers)
+		total_sessions = len(self.sessions)
+		missing_abstracts = 0
+		missing_links = 0
+		for _, papers in self.sessions.items():
+			for paper in papers:
+				if paper["abstract"] == "":
+					missing_abstracts += 1
+				if paper["link"] == "":
+					missing_links += 1
+
+		print(f"Sessions: {total_sessions}")
+		print(f"Papers: {total_papers}")
+		print(f"Missing abstracts: {missing_abstracts}")
+		print(f"Missing links: {missing_links}")
+
 	def get_sessions(self):
 		return self.sessions
