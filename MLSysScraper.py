@@ -40,14 +40,11 @@ class MLSysScraper(AbstractConferenceScraper):
 				authors = paper_div.find('p', class_='text-muted').text.strip()
 				abstract = paper_div.find('div', class_='abstract').text.strip()
 
-				_, link = get_info_from_semantic_scholar(paper_title)
-
 				papers.append({
 					"title": paper_title,
 					"authors": authors,
 					"abstract": abstract,
 					"link": paper_link,
-					"paper_link": link
 				})
 
 			self.sessions[session_title] = papers
