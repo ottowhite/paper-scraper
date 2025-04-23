@@ -1,12 +1,8 @@
 from bs4 import BeautifulSoup
 from retrieve_webpage import get_cached_webpage
 from retrieve_paper_info import get_info_from_semantic_scholar
+from utils import flat_map
 
-def flat_map(f, xs):
-    ys = []
-    for x in xs:
-        ys.extend(f(x))
-    return ys
 
 def scrape_sessions_sosp_old(url, conference_name):
     assert conference_name in ["sosp21", "sosp23", "sosp19"], "Invalid conference name"
