@@ -2,13 +2,19 @@ import requests
 import os
 import hashlib
 import time
+from requests_html import HTMLSession
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 semantic_scholar_rate_limit_sleep_time = 2
 other_rate_limit_sleep_time = 60
 
 DEBUG = False
 
-def get_cached_webpage(url, params=None, headers=None, cache_dir=".cache", response_type="html", target_url="other"):
+def get_cached_webpage(url, params=None, headers=None, cache_dir=".cache", response_type="html", target_url="other", pre_render=False):
     """
     Get webpage content from cache or download it if not cached.
     Returns the webpage content as a string.
@@ -56,7 +62,20 @@ def get_cached_webpage(url, params=None, headers=None, cache_dir=".cache", respo
     # Download the webpage if cache doesn't exist
     if DEBUG:
         print("Downloading webpage...")
-    response = requests.get(url, headers=headers, params=params)
+    if target_url == "other":
+        if headers is None:
+            headers = {}
+
+        headers['User-Agent'] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"
+
+        if pre_render:
+            session = HTMLSession()
+            response = session.get(url, headers=headers, params=params)
+            response.html.render()
+            response_text = response.html.raw_html
+        else:
+            response = requests.get(url, headers=headers, params=params)
+            response_text = response.text
 
     if response.status_code != 200:
         if response.status_code == 429:
@@ -68,12 +87,49 @@ def get_cached_webpage(url, params=None, headers=None, cache_dir=".cache", respo
                 print(f"Rate limited at {other_rate_limit_sleep_time}s, doubling the sleep time to {2 * other_rate_limit_sleep_time}s.")
                 other_rate_limit_sleep_time *= 2
 
-            return get_cached_webpage(url, params, cache_dir, response_type)
+            return get_cached_webpage(url, params, cache_dir, response_type, pre_render)
 
-        raise Exception(f"Failed to retrieve the webpage: Status code {response.status_code}")
+        raise Exception(f"Failed to retrieve the webpage: Status code {response.status_code}, output: {response_text}")
     
     # Save to cache
     with open(cache_file, 'w', encoding='utf-8') as f:
-        f.write(response.text)
+        f.write(response_text)
     
-    return response.text
+    return response_text
+
+def get_cached_webpage_via_selenium(url):
+    assert "dl.acm.org" in url
+
+    # Cache the webpage
+    url_hash = hashlib.md5(url.encode()).hexdigest()
+    cache_file = os.path.join(".cache", f"{url_hash}.html")
+    print(f"Cache file: {cache_file}")
+    if os.path.exists(cache_file):
+        with open(cache_file, 'r', encoding='utf-8') as f:
+            return f.read()
+
+    chrome_options = Options()
+    # chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+
+	# Ensure that the webpage has rendered fully
+    driver = webdriver.Chrome(options=chrome_options)
+    driver.get(url)
+    driver.minimize_window()
+    # Wait for 60 seconds for the page to load, and for the request to look less suspicious
+    print(f"Sleeping for {other_rate_limit_sleep_time}s...")
+    # Wait for 5 seconds to ensure the page is loaded
+    time.sleep(5)
+    # Save to cache
+    html = driver.page_source
+    with open(cache_file, 'w', encoding='utf-8') as f:
+        f.write(html)
+
+    # Wait for the remaining time to not be rate limited
+    time.sleep(other_rate_limit_sleep_time - 5)
+
+    driver.quit()
+
+    return html

@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-from retrieve_webpage import get_cached_webpage
+from retrieve_webpage import get_cached_webpage, get_cached_webpage_via_selenium
 from retrieve_paper_info import get_info_from_semantic_scholar
 
 class ConferenceScraper:
@@ -26,7 +26,7 @@ class ConferenceScraper:
 	def extract(self):
 		self.extract_session_titles_and_links()
 		self.extract_sessions()
-		self.populate_missing_abstracts()
+		self.populate_missing_abstracts_and_links()
 		self.print_stats()
 
 		return self.sessions
@@ -76,13 +76,47 @@ class ConferenceScraper:
 
 			self.sessions[session_title] = papers
 	
-	def populate_missing_abstracts(self):
+	def populate_missing_abstracts_and_links(self):
+		self.populate_missing_abstracts_and_links_from_semantic_scholar()
+		self.populate_missing_abstracts_from_paper_links()
+
+	def populate_missing_abstracts_and_links_from_semantic_scholar(self):
 		for _, papers in self.sessions.items():
 			for paper in papers:
-				if paper["abstract"] == "":
-					abstract, _ = get_info_from_semantic_scholar(paper["title"])
-					if abstract != "":
-						paper["abstract"] = abstract
+				self.try_populate_abstract_and_link_from_semantic_scholar(paper)
+				self.try_populate_missing_abstracts_from_doi(paper)
+
+	def try_populate_abstract_and_link_from_semantic_scholar(self, paper):
+		if paper["abstract"] == "":
+			abstract, link = get_info_from_semantic_scholar(paper["title"])
+			if abstract != "":
+				paper["abstract"] = abstract
+			if paper["link"] == "" and link != "":
+				paper["link"] = link
+
+
+	def try_populate_missing_abstracts_from_doi(self, paper):
+		if paper["abstract"] == "":
+			if paper["link"] != "" and "doi.org" in paper["link"]:
+				# If link in this format
+				# https://doi.org/10.1145/3676641.3716268
+				# Convert to this format
+				# https://dl.acm.org/doi/10.1145/3676641.3716268
+				if "doi.org" in paper["link"]:
+					dl_link = paper["link"].replace("doi.org", "dl.acm.org/doi")
+				elif "dl.acm.org" in paper["link"]:
+					dl_link = paper["link"]
+				else:
+					print(f"No doi found in link: {paper['link']}")
+					return
+
+				soup = BeautifulSoup(get_cached_webpage_via_selenium(dl_link), 'html.parser')
+
+				abstract = soup.find('section', id='abstract')
+				abstract_paragraphs = abstract.find_all('div', role='paragraph')
+				abstract_text = "\n".join([paragraph.text.strip() for paragraph in abstract_paragraphs])
+				paper["abstract"] = abstract_text
+				print(abstract_text)
 	
 	def print_stats(self):
 		total_papers = 0
