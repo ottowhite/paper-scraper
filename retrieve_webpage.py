@@ -22,8 +22,8 @@ def get_cached_webpage(url, params=None, headers=None, cache_dir=".cache", respo
     global semantic_scholar_rate_limit_sleep_time
     global other_rate_limit_sleep_time
 
-    assert response_type in ["html", "json"]
-    assert target_url in ["semantic_scholar", "other"]
+    assert response_type in ["html", "json"], f"Invalid response type: {response_type}"
+    assert target_url in ["semantic_scholar", "other"], f"Invalid target URL: {target_url}"
 
     # Create cache directory if it doesn't exist
     os.makedirs(cache_dir, exist_ok=True)
@@ -62,20 +62,22 @@ def get_cached_webpage(url, params=None, headers=None, cache_dir=".cache", respo
     # Download the webpage if cache doesn't exist
     if DEBUG:
         print("Downloading webpage...")
+
     if target_url == "other":
         if headers is None:
             headers = {}
 
         headers['User-Agent'] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36"
 
-        if pre_render:
-            session = HTMLSession()
-            response = session.get(url, headers=headers, params=params)
-            response.html.render()
-            response_text = response.html.raw_html
-        else:
-            response = requests.get(url, headers=headers, params=params)
-            response_text = response.text
+    if pre_render:
+        session = HTMLSession()
+        response = session.get(url, headers=headers, params=params)
+        response.html.render()
+        response_text = response.html.raw_html
+    else:
+        response = requests.get(url, headers=headers, params=params)
+        response_text = response.text
+
 
     if response.status_code != 200:
         if response.status_code == 429:
@@ -87,7 +89,7 @@ def get_cached_webpage(url, params=None, headers=None, cache_dir=".cache", respo
                 print(f"Rate limited at {other_rate_limit_sleep_time}s, doubling the sleep time to {2 * other_rate_limit_sleep_time}s.")
                 other_rate_limit_sleep_time *= 2
 
-            return get_cached_webpage(url, params, cache_dir, response_type, pre_render)
+            return get_cached_webpage(url, params, headers, cache_dir, response_type, target_url, pre_render)
 
         raise Exception(f"Failed to retrieve the webpage: Status code {response.status_code}, output: {response_text}")
     
@@ -115,7 +117,7 @@ def get_cached_webpage_via_selenium(url):
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
 
-	# Ensure that the webpage has rendered fully
+    # Ensure that the webpage has rendered fully
     driver = webdriver.Chrome(options=chrome_options)
     driver.get(url)
     driver.minimize_window()

@@ -2,6 +2,7 @@ from AbstractConferenceScraper import AbstractConferenceScraper
 from utils import flat_map
 from retrieve_webpage import get_cached_webpage
 from bs4 import BeautifulSoup
+from retrieve_paper_info import get_info_from_semantic_scholar
 
 class MLSysScraper(AbstractConferenceScraper):
 	def __init__(self):
@@ -39,11 +40,14 @@ class MLSysScraper(AbstractConferenceScraper):
 				authors = paper_div.find('p', class_='text-muted').text.strip()
 				abstract = paper_div.find('div', class_='abstract').text.strip()
 
+				_, link = get_info_from_semantic_scholar(paper_title)
+
 				papers.append({
 					"title": paper_title,
 					"authors": authors,
 					"abstract": abstract,
-					"link": paper_link
+					"link": paper_link,
+					"paper_link": link
 				})
 
 			self.sessions[session_title] = papers
@@ -54,4 +58,4 @@ class MLSysScraper(AbstractConferenceScraper):
 if __name__ == "__main__":
 	scraper = MLSysScraper()
 	scraper.extract()
-	scraper.save_sessions(force_overwrite=True)
+	scraper.save_sessions(force_overwrite=False)
