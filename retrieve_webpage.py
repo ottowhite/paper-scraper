@@ -103,7 +103,8 @@ def get_cached_webpage_via_selenium(url):
     # Cache the webpage
     url_hash = hashlib.md5(url.encode()).hexdigest()
     cache_file = os.path.join(".cache", f"{url_hash}.html")
-    print(f"Cache file: {cache_file}")
+    if DEBUG:
+        print(f"Cache file: {cache_file}")
     if os.path.exists(cache_file):
         with open(cache_file, 'r', encoding='utf-8') as f:
             return f.read()

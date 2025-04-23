@@ -77,10 +77,6 @@ class ConferenceScraper:
 			self.sessions[session_title] = papers
 	
 	def populate_missing_abstracts_and_links(self):
-		self.populate_missing_abstracts_and_links_from_semantic_scholar()
-		self.populate_missing_abstracts_from_paper_links()
-
-	def populate_missing_abstracts_and_links_from_semantic_scholar(self):
 		for _, papers in self.sessions.items():
 			for paper in papers:
 				self.try_populate_abstract_and_link_from_semantic_scholar(paper)
@@ -116,7 +112,6 @@ class ConferenceScraper:
 				abstract_paragraphs = abstract.find_all('div', role='paragraph')
 				abstract_text = "\n".join([paragraph.text.strip() for paragraph in abstract_paragraphs])
 				paper["abstract"] = abstract_text
-				print(abstract_text)
 	
 	def print_stats(self):
 		total_papers = 0
