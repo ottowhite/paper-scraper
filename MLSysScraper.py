@@ -49,9 +49,6 @@ class MLSysScraper(AbstractConferenceScraper):
 
 			self.sessions[session_title] = papers
 
-	def populate_missing_abstracts_and_links(self):
-		pass
-
 if __name__ == "__main__":
 	scraper = MLSysScraper()
 	scraper.extract()
