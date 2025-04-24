@@ -14,7 +14,7 @@ from scrape_sosp24 import scrape_sessions_sosp24
 from scrape_sosp_old import scrape_sessions_sosp_old
 from scrape_eurosys import scrape_sessions_eurosys
 from scrape_eurosys22 import scrape_sessions_eurosys22
-from ConferenceScraper import ConferenceScraper
+from EuroSys25ConferenceScraper import EuroSys25ConferenceScraper
 
 def scrape_and_save(url, conference_name, filename_prefix):
     if conference_name == "atc" or conference_name == "nsdi" or conference_name == "osdi":
@@ -29,7 +29,7 @@ def scrape_and_save(url, conference_name, filename_prefix):
         data = scrape_sessions_eurosys22(url, conference_name)
     elif conference_name == "eurosys25":
         assert url is None
-        scraper = ConferenceScraper("eurosys25", "https://download.vusec.net/asplos-eurosys-2025/schedule/nojs")
+        scraper = EuroSys25ConferenceScraper("eurosys25", "https://download.vusec.net/asplos-eurosys-2025/schedule/nojs")
         data = scraper.extract()
     else:
         raise ValueError(f"Invalid conference name: {conference_name}")
