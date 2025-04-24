@@ -23,30 +23,26 @@ class MLSysScraper(AbstractScrapingStrategy1):
 
 		return sessions_and_links
 
-	def extract_sessions(self, sessions_and_links: List[Tuple[str, str]]) -> Dict[str, List[Dict[str, str]]]:
-		sessions = {}
-		for session_title, session_link in sessions_and_links:
-			session_soup = BeautifulSoup(get_cached_webpage(session_link), 'html.parser')
+	def link_to_papers(self, session_link: str) -> List[Dict[str, str]]:
+		session_soup = BeautifulSoup(get_cached_webpage(session_link), 'html.parser')
 
-			paper_divs = session_soup.find_all('div', class_='track-schedule-card')
-			papers = []
-			for paper_div in paper_divs:
-				paper_title = paper_div.find('a').text.strip()
+		paper_divs = session_soup.find_all('div', class_='track-schedule-card')
+		papers = []
+		for paper_div in paper_divs:
+			paper_title = paper_div.find('a').text.strip()
 
-				paper_link = f"https://mlsys.org{paper_div.find('a')['href']}"
-				authors = paper_div.find('p', class_='text-muted').text.strip()
-				abstract = paper_div.find('div', class_='abstract').text.strip()
+			paper_link = f"https://mlsys.org{paper_div.find('a')['href']}"
+			authors = paper_div.find('p', class_='text-muted').text.strip()
+			abstract = paper_div.find('div', class_='abstract').text.strip()
 
-				papers.append({
-					"title": paper_title,
-					"authors": authors,
-					"abstract": abstract,
-					"link": paper_link,
-				})
+			papers.append({
+				"title": paper_title,
+				"authors": authors,
+				"abstract": abstract,
+				"link": paper_link,
+			})
 
-			sessions[session_title] = papers
-
-		return sessions
+		return papers
 
 
 if __name__ == "__main__":

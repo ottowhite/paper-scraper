@@ -25,9 +25,10 @@ class ConferenceScraper():
             self.sessions_and_links = self.scraping_strategy1.extract_session_titles_and_links(
                 self.top_level_soup
             )
-            self.sessions = self.scraping_strategy1.extract_sessions(
-                self.sessions_and_links
-            )
+            for session_title, session_link in self.sessions_and_links:
+                papers = self.scraping_strategy1.link_to_papers(session_link)
+                self.sessions[session_title] = papers
+
             self.populate_missing_abstracts_and_links()
             self.print_stats()
         else:

@@ -11,8 +11,8 @@ class AbstractScrapingStrategy1(ABC):
 		pass
 
 	@abstractmethod
-	def extract_sessions(
+	def link_to_papers(
 		self,
-		session_titles_and_links: List[Tuple[str, str]]
-	) -> Dict[str, List[Dict[str, str]]]:
+		session_link: str
+	) -> List[Dict[str, str]]:
 		pass
