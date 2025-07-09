@@ -5,20 +5,23 @@ import json
 import os
 from copy import deepcopy
 from utils import pretty_print_diff
-from ScrapingStrategies import AbstractScrapingStrategy1
+from ScrapingStrategies import AbstractScrapingStrategy1, AbstractScrapingStrategy2
+from OsdiAtcNsdiConferenceScraper import OsdiAtcNsdiConferenceScraper
 
 class ConferenceScraper():
     def __init__(
         self,
         conference_name,
         top_level_url,
-        scraping_strategy1: AbstractScrapingStrategy1 = None
+        scraping_strategy1: AbstractScrapingStrategy1 = None,
+        scraping_strategy2: AbstractScrapingStrategy2 = None
     ):
         self.conference_name = conference_name
         self.top_level_soup = BeautifulSoup(get_cached_webpage(top_level_url), 'html.parser')
         self.sessions = {}
         self.sessions_and_links = []
         self.scraping_strategy1 = scraping_strategy1
+        self.scraping_strategy2 = scraping_strategy2
 
     def extract(self):
         if self.scraping_strategy1 is not None:
@@ -31,8 +34,10 @@ class ConferenceScraper():
 
             self.populate_missing_abstracts_and_links()
             self.print_stats()
+        elif self.scraping_strategy2 is not None:
+            self.sessions = self.scraping_strategy2.extract_sessions(self.top_level_soup)
         else:
-            raise ValueError("Scraping strategy 1 is not set")
+            raise ValueError("Scraping strategy 1 or 2 is not set")
 
     def populate_missing_abstracts_and_links(self):
         for _, papers in self.sessions.items():
@@ -141,3 +146,12 @@ class ConferenceScraper():
                         f.write(f"     - {value}\n")
         
         print(f"Data saved to notion_format/{filename}")
+
+if __name__ == "__main__":
+    scraper = ConferenceScraper(
+        "osdi_atc25",
+        "https://www.usenix.org/conference/osdi25/technical-sessions",
+        scraping_strategy2=OsdiAtcNsdiConferenceScraper("osdi_atc25")
+    )
+    scraper.extract()
+    scraper.save_sessions(force_overwrite=True)
