@@ -154,4 +154,5 @@ if __name__ == "__main__":
         scraping_strategy2=OsdiAtcNsdiConferenceScraper("osdi_atc25")
     )
     scraper.extract()
-    scraper.save_sessions(force_overwrite=True)
+    scraper.print_stats()
+    scraper.save_sessions(force_overwrite=False)
